@@ -1,0 +1,27 @@
+{
+  "name": "invoice-backend-ts",
+  "version": "1.0.0",
+  "description": "MEAN Stack Invoice Generator Backend in TypeScript",
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.19.2",
+    "mongoose": "^8.3.1",
+    "pdfkit": "^0.15.0",
+    "pdfkit-table": "^0.1.99"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.19.43",
+    "@types/pdfkit": "^0.13.4",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.4.5"
+  }
+}

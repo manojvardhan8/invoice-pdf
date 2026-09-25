@@ -1,0 +1,415 @@
+<div class="app-container">
+  <!-- Top Navigation Header -->
+  <header class="app-header">
+    <div class="logo-brand">
+      <div class="brand-badge">N</div>
+      <div>
+        <h1 class="brand-title">Nandan Enterprises Cash/Credit Bill Generator</h1>
+        <p class="brand-subtitle">MEAN Stack • MongoDB • Express • Angular • Node.js • Vector PDF Engine</p>
+      </div>
+    </div>
+
+    <div class="nav-tabs">
+      <button 
+        class="nav-btn" 
+        [class.active]="activeTab === 'form'" 
+        (click)="activeTab = 'form'">
+        📝 {{ editingId ? 'Edit Bill' : 'Cash/Credit Bill Form' }}
+      </button>
+      <button 
+        class="nav-btn" 
+        [class.active]="activeTab === 'list'" 
+        (click)="activeTab = 'list'; loadInvoices()">
+        📁 Stored Bills ({{ invoices.length }})
+      </button>
+    </div>
+  </header>
+
+  <!-- Alerts -->
+  <div *ngIf="successMessage" class="alert alert-success">
+    ✅ {{ successMessage }}
+  </div>
+  <div *ngIf="errorMessage" class="alert alert-danger">
+    ⚠️ {{ errorMessage }}
+  </div>
+
+  <!-- Loading Overlay -->
+  <div *ngIf="loading" class="loading-bar">Processing...</div>
+
+  <!-- MAIN TAB 1: CASH / CREDIT BILL FORM -->
+  <div *ngIf="activeTab === 'form'" class="tab-content">
+
+    <form (ngSubmit)="onSubmit()" #invoiceForm="ngForm">
+      
+      <!-- Section 1: Header Information (Supplier / Seller) -->
+      <div class="card">
+        <div class="card-header">
+          <h3>🏬 Business Header Information (Supplier / Seller)</h3>
+        </div>
+        <div class="card-body grid-3">
+          <div class="form-group">
+            <label>Bill Type Title</label>
+            <input type="text" [(ngModel)]="invoice.billType" name="billType" required class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Company Name (Header) *</label>
+            <input type="text" [(ngModel)]="invoice.companyName" name="companyName" required class="form-control font-bold">
+          </div>
+          <div class="form-group">
+            <label>GSTIN *</label>
+            <input type="text" [(ngModel)]="invoice.companyGstin" name="companyGstin" required placeholder="e.g. 37QDZPK8368B1ZG" class="form-control">
+          </div>
+          <div class="form-group span-2">
+            <label>Company Subtitle / Trade Categories</label>
+            <input type="text" [(ngModel)]="invoice.companySubtitle" name="companySubtitle" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Mobile / Contact No. *</label>
+            <input type="text" [(ngModel)]="invoice.companyPhone" name="companyPhone" placeholder="e.g. 8975913610" class="form-control">
+          </div>
+          <div class="form-group span-3">
+            <label>Company Address</label>
+            <input type="text" [(ngModel)]="invoice.companyAddress" name="companyAddress" class="form-control">
+          </div>
+          <div class="form-group span-3">
+            <label>Company Header Logo (Drag & Drop or Click to Upload)</label>
+            <div 
+              class="logo-dropzone" 
+              [class.dragging]="isDragging"
+              (dragover)="onDragOver($event)"
+              (dragleave)="onDragLeave($event)"
+              (drop)="onDrop($event)"
+              (click)="fileInput.click()">
+              <input #fileInput type="file" (change)="onFileSelected($event)" accept="image/*" style="display: none;">
+              
+              <div *ngIf="!invoice.logoUrl" class="dropzone-placeholder">
+                <span class="dropzone-icon">📁</span>
+                <span class="dropzone-text">Drag & Drop Logo Image here or <strong class="text-primary">Browse File</strong></span>
+                <span class="dropzone-sub">Supports PNG, JPG, SVG, WebP (Max 5MB)</span>
+              </div>
+
+              <div *ngIf="invoice.logoUrl" class="dropzone-preview" (click)="$event.stopPropagation()">
+                <img [src]="invoice.logoUrl" alt="Logo Preview" class="logo-img-preview">
+                <div class="preview-info">
+                  <span class="badge badge-success">Logo Attached</span>
+                  <button type="button" class="btn btn-sm btn-outline-danger mt-1" (click)="removeLogo()">✕ Remove Logo</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Customer & Invoice Details (Buyer / Recipient) -->
+      <div class="card">
+        <div class="card-header">
+          <h3>👤 Customer & Supply Details (Buyer / Recipient)</h3>
+        </div>
+        <div class="card-body grid-2">
+          
+          <!-- Left Column: Customer Details (MAA MAHAMAYA INDUSTRIES LTD.) -->
+          <div class="address-box">
+            <h4 class="box-title">Customer Information</h4>
+            <div class="form-group">
+              <label>Customer Name *</label>
+              <input type="text" [(ngModel)]="invoice.customer.name" name="custName" required placeholder="MAA MAHAMAYA INDUSTRIES LTD." class="form-control font-bold">
+            </div>
+            <div class="form-group">
+              <label>Address</label>
+              <textarea [(ngModel)]="invoice.customer.address" name="custAddress" rows="2" class="form-control"></textarea>
+            </div>
+            <div class="grid-2">
+              <div class="form-group">
+                <label>GST IN</label>
+                <input type="text" [(ngModel)]="invoice.customer.gstin" name="custGstin" class="form-control">
+              </div>
+              <div class="form-group">
+                <label>Contact (Mobile / Email)</label>
+                <input type="text" [(ngModel)]="invoice.customer.cellNo" name="custCell" placeholder="e.g. 9876543210 or Email" class="form-control">
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="form-group">
+                <label>State</label>
+                <input type="text" [(ngModel)]="invoice.customer.state" name="custState" class="form-control">
+              </div>
+              <div class="form-group">
+                <label>State Code</label>
+                <input type="text" [(ngModel)]="invoice.customer.stateCode" name="custStateCode" class="form-control">
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Invoice / Supply Details -->
+          <div class="address-box">
+            <h4 class="box-title">Invoice & Transportation Metadata</h4>
+            <div class="form-group">
+              <label>Invoice No. *</label>
+              <input type="text" [(ngModel)]="invoice.invoiceNo" name="invoiceNo" required placeholder="e.g. PL26Y-00059" class="form-control font-bold">
+            </div>
+            <div class="form-group">
+              <label>Transportation Mode</label>
+              <input type="text" [(ngModel)]="invoice.transportMode" name="transportMode" placeholder="e.g. Road Transport" class="form-control">
+            </div>
+            <div class="grid-2">
+              <div class="form-group">
+                <label>Date of Supply</label>
+                <input type="text" [(ngModel)]="invoice.dateOfSupply" name="dateOfSupply" class="form-control">
+              </div>
+              <div class="form-group">
+                <label>Place of Supply</label>
+                <input type="text" [(ngModel)]="invoice.placeOfSupply" name="placeOfSupply" class="form-control">
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Section 3: Itemized Goods Table -->
+      <div class="card">
+        <div class="card-header space-between">
+          <h3>📦 Items & Goods Table (Detailed Tax Columns)</h3>
+          <button type="button" class="btn btn-secondary btn-sm" (click)="addItem()">
+            ➕ Add Line Item
+          </button>
+        </div>
+        <div class="card-body table-responsive">
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th style="width: 30px;">#</th>
+                <th style="width: 220px;">Goods Description & Meta</th>
+                <th style="width: 70px;">Qty</th>
+                <th style="width: 60px;">Unit</th>
+                <th style="width: 80px;">Rate (₹)</th>
+                <th style="width: 90px;">Taxable Amt</th>
+                <th style="width: 60px;">SGST %</th>
+                <th style="width: 70px;">SGST Amt</th>
+                <th style="width: 60px;">CGST %</th>
+                <th style="width: 70px;">CGST Amt</th>
+                <th style="width: 40px;">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of invoice.items; let i = index">
+                <td class="text-center font-bold">{{ i + 1 }}</td>
+                <td>
+                  <input type="text" [(ngModel)]="item.description" name="desc_{{i}}" (input)="calculateItem(item)" placeholder="Item Description" class="form-control mb-1">
+                  <div class="grid-2 gap-1">
+                    <input type="text" [(ngModel)]="item.indentNo" name="indent_{{i}}" placeholder="Indent No." class="form-control xs">
+                    <input type="text" [(ngModel)]="item.hsnSacNo" name="hsn_{{i}}" placeholder="HSN/SAC Code" class="form-control xs">
+                  </div>
+                  <div class="grid-2 gap-1 mt-1">
+                    <input type="text" [(ngModel)]="item.specifications" name="spec_{{i}}" placeholder="Specs (e.g. 3M Length)" class="form-control xs">
+                    <input type="text" [(ngModel)]="item.deliveryDate" name="delDate_{{i}}" placeholder="Delivery Date" class="form-control xs">
+                  </div>
+                </td>
+                <td>
+                  <input type="number" [(ngModel)]="item.qty" name="qty_{{i}}" (input)="calculateItem(item)" class="form-control text-right">
+                </td>
+                <td>
+                  <input type="text" [(ngModel)]="item.unit" name="unit_{{i}}" class="form-control text-center">
+                </td>
+                <td>
+                  <input type="number" step="0.01" [(ngModel)]="item.rate" name="rate_{{i}}" (input)="calculateItem(item)" class="form-control text-right">
+                </td>
+                <td class="font-bold text-right align-middle">
+                  ₹ {{ item.matValue | number:'1.2-2' }}
+                </td>
+                <td>
+                  <input type="number" [(ngModel)]="item.sgstRate" name="sgstR_{{i}}" (input)="calculateItem(item)" class="form-control text-right">
+                </td>
+                <td class="text-right align-middle">
+                  ₹ {{ item.sgstAmt | number:'1.2-2' }}
+                </td>
+                <td>
+                  <input type="number" [(ngModel)]="item.cgstRate" name="cgstR_{{i}}" (input)="calculateItem(item)" class="form-control text-right">
+                </td>
+                <td class="text-right align-middle">
+                  ₹ {{ item.cgstAmt | number:'1.2-2' }}
+                </td>
+                <td class="text-center align-middle">
+                  <button type="button" class="btn-icon danger" (click)="removeItem(i)" title="Remove Item">✕</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Section 4: Footer, Terms & Tax Calculations -->
+      <div class="card">
+        <div class="card-header">
+          <h3>💰 Totals, Tax Breakdown & Terms</h3>
+        </div>
+        <div class="card-body">
+          
+          <!-- Auto-generated Total Cost in Words Banner -->
+          <div class="words-banner mb-3">
+            <span class="label">Rupees in words (Auto-generated):</span>
+            <span class="font-bold text-blue text-lg">{{ invoice.rupeesInWords || 'Zero Rupees Only' }}</span>
+          </div>
+
+          <div class="grid-2">
+            
+            <!-- Left Side: Terms & Conditions -->
+            <div>
+              <div class="address-box">
+                <div class="space-between mb-2">
+                  <h4 class="box-title" style="margin-bottom: 0;">Terms & Conditions</h4>
+                  <button type="button" class="btn btn-secondary btn-sm" (click)="addTerm()">
+                    ➕ Add Term
+                  </button>
+                </div>
+                <div *ngFor="let term of invoice.termsConditions; let t = index" class="form-group flex-row gap-1 align-center">
+                  <input type="text" [(ngModel)]="invoice.termsConditions[t]" name="term_{{t}}" class="form-control xs">
+                  <button type="button" class="btn-icon danger" (click)="removeTerm(t)" title="Remove Term">✕</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Side: Tax Breakdown Box -->
+            <div class="tax-box">
+              <h4 class="box-title">Tax Summary Breakdown</h4>
+              
+              <div class="tax-row">
+                <span>Total value before Tax :</span>
+                <span class="value">₹ {{ invoice.totalMatValue | number:'1.2-2' }}</span>
+              </div>
+
+              <div class="tax-row">
+                <span>Add CGST :</span>
+                <span class="value">₹ {{ invoice.cgstAmt | number:'1.2-2' }}</span>
+              </div>
+
+              <div class="tax-row">
+                <span>Add SGST :</span>
+                <span class="value">₹ {{ invoice.sgstAmt | number:'1.2-2' }}</span>
+              </div>
+
+              <div class="tax-row grand-row">
+                <span>Total Amount after Tax :</span>
+                <span class="grand-value">₹ {{ invoice.totalAmountAfterTax | number:'1.2-2' }}</span>
+              </div>
+
+              <!-- Single Signature Block with Drag & Drop Digital Signature -->
+              <div class="signature-box mt-3">
+                <p class="sig-org">FOR-{{ invoice.companyName }}</p>
+
+                <!-- Signature Drag & Drop Container -->
+                <div 
+                  class="sig-dropzone" 
+                  [class.dragging]="isDraggingSignature"
+                  (dragover)="onSigDragOver($event)"
+                  (dragleave)="onSigDragLeave($event)"
+                  (drop)="onSigDrop($event)"
+                  (click)="sigFileInput.click()">
+                  <input #sigFileInput type="file" (change)="onSigFileSelected($event)" accept="image/*" style="display: none;">
+                  
+                  <div *ngIf="!invoice.signatureUrl" class="sig-placeholder">
+                    <span class="sig-icon">✍️</span>
+                    <span class="sig-text">Drag & drop digital signature image here or <strong class="text-primary">Browse</strong></span>
+                  </div>
+
+                  <div *ngIf="invoice.signatureUrl" class="sig-preview" (click)="$event.stopPropagation()">
+                    <img [src]="invoice.signatureUrl" alt="Digital Signature Preview" class="sig-img-preview">
+                    <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeSignature()">✕ Remove</button>
+                  </div>
+                </div>
+
+                <p class="sig-label">Signature.</p>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Form Actions Footer -->
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary btn-lg">
+          💾 {{ editingId ? 'Update Bill' : 'Save Bill to Database' }}
+        </button>
+        <button type="button" class="btn btn-secondary btn-lg" (click)="onPreviewPdf()">
+          👁️ Preview PDF
+        </button>
+        <button type="button" class="btn btn-light btn-lg" (click)="resetForm()">
+          🔄 Reset Form
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+  <!-- MAIN TAB 2: STORED INVOICES REPOSITORY -->
+  <div *ngIf="activeTab === 'list'" class="tab-content">
+    <div class="card">
+      <div class="card-header space-between">
+        <h3>📁 Saved Bills Repository (MongoDB)</h3>
+        <button class="btn btn-secondary btn-sm" (click)="loadInvoices()">🔄 Refresh List</button>
+      </div>
+      <div class="card-body table-responsive">
+        <div *ngIf="invoices.length === 0" class="empty-state">
+          <p>No bills saved yet. Switch to the <strong>Cash/Credit Bill Form</strong> tab to create your first bill!</p>
+        </div>
+
+        <table *ngIf="invoices.length > 0" class="data-table">
+          <thead>
+            <tr>
+              <th>Invoice No</th>
+              <th>Date of Supply</th>
+              <th>Customer Name</th>
+              <th>Items</th>
+              <th>Before Tax</th>
+              <th>Total Amount after Tax</th>
+              <th>Created At</th>
+              <th style="width: 200px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let inv of invoices">
+              <td class="font-bold text-primary">{{ inv.invoiceNo }}</td>
+              <td>{{ inv.dateOfSupply }}</td>
+              <td>{{ inv.customer ? inv.customer.name : 'N/A' }}</td>
+              <td>{{ inv.items ? inv.items.length : 0 }} items</td>
+              <td>₹ {{ inv.totalMatValue | number:'1.2-2' }}</td>
+              <td class="font-bold text-success">₹ {{ inv.totalAmountAfterTax | number:'1.2-2' }}</td>
+              <td class="text-sm">{{ inv.createdAt | date:'short' }}</td>
+              <td class="actions-cell">
+                <button class="btn btn-sm btn-outline-primary" (click)="downloadPdf(inv)" title="Download PDF">
+                  📥 PDF
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" (click)="editInvoice(inv)" title="Edit Bill">
+                  ✏️ Edit
+                </button>
+                <button class="btn btn-sm btn-outline-danger" (click)="deleteInvoice(inv._id)" title="Delete Bill">
+                  🗑️
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- PDF PREVIEW MODAL -->
+  <div *ngIf="showPdfModal" class="modal-backdrop" (click)="closeModal()">
+    <div class="modal-window" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h4>📄 {{ pdfTitle }}</h4>
+        <button class="modal-close" (click)="closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <iframe *ngIf="pdfUrl" [src]="pdfUrl" class="pdf-iframe"></iframe>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeModal()">Close Preview</button>
+      </div>
+    </div>
+  </div>
+
+</div>
