@@ -284,6 +284,10 @@ export class AppComponent implements OnInit {
     this.showSuccess('Form cleared.');
   }
 
+  trackByIndex(index: number, item: any): number {
+    return index;
+  }
+
   // Terms and Conditions Handlers
   addTerm(): void {
     if (!this.invoice.termsConditions) {

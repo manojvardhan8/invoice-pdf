@@ -262,7 +262,7 @@
                     ➕ Add Term
                   </button>
                 </div>
-                <div *ngFor="let term of invoice.termsConditions; let t = index" class="form-group flex-row gap-1 align-center">
+                <div *ngFor="let term of invoice.termsConditions; let t = index; trackBy: trackByIndex" class="form-group flex-row gap-1 align-center">
                   <input type="text" [(ngModel)]="invoice.termsConditions[t]" name="term_{{t}}" class="form-control xs">
                   <button type="button" class="btn-icon danger" (click)="removeTerm(t)" title="Remove Term">✕</button>
                 </div>
