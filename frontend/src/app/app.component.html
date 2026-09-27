@@ -403,11 +403,30 @@
         <h4>📄 {{ pdfTitle }}</h4>
         <button class="modal-close" (click)="closeModal()">✕</button>
       </div>
-      <div class="modal-body">
-        <iframe *ngIf="pdfUrl" [src]="pdfUrl" class="pdf-iframe"></iframe>
+
+      <!-- Mobile PDF Notice Banner -->
+      <div class="mobile-pdf-notice">
+        <div class="notice-text">
+          <span>📱 PDF preview blank or not loading on mobile?</span>
+        </div>
+        <button type="button" class="btn btn-sm btn-primary" (click)="openPdfInNewTab()">
+          Open Fullscreen PDF
+        </button>
       </div>
+
+      <div class="modal-body">
+        <object *ngIf="pdfUrl" [data]="pdfUrl" type="application/pdf" class="pdf-iframe">
+          <iframe [src]="pdfUrl" class="pdf-iframe"></iframe>
+        </object>
+      </div>
+
       <div class="modal-footer">
-        <button class="btn btn-secondary" (click)="closeModal()">Close Preview</button>
+        <button type="button" class="btn btn-outline-primary" (click)="openPdfInNewTab()">
+          📱 Open PDF in Mobile Viewer
+        </button>
+        <button type="button" class="btn btn-secondary" (click)="closeModal()">
+          Close Preview
+        </button>
       </div>
     </div>
   </div>

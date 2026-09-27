@@ -21,6 +21,7 @@ export class AppComponent implements OnInit {
   // PDF Modal State
   showPdfModal: boolean = false;
   pdfUrl: SafeResourceUrl | null = null;
+  rawPdfBlobUrl: string | null = null;
   pdfTitle: string = 'Invoice Preview';
 
   // Drag & Drop Logo & Signature Upload State
@@ -250,8 +251,11 @@ export class AppComponent implements OnInit {
     this.loading = true;
     this.invoiceService.previewPdf(this.invoice).subscribe({
       next: (blob) => {
-        const fileUrl = URL.createObjectURL(blob);
-        this.pdfUrl = this.sanitizer.bypassSecurityTrustResourceUrl(fileUrl);
+        if (this.rawPdfBlobUrl) {
+          URL.revokeObjectURL(this.rawPdfBlobUrl);
+        }
+        this.rawPdfBlobUrl = URL.createObjectURL(blob);
+        this.pdfUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.rawPdfBlobUrl);
         this.pdfTitle = `Preview: ${this.invoice.invoiceNo || 'New Bill'}`;
         this.showPdfModal = true;
         this.loading = false;
@@ -261,6 +265,12 @@ export class AppComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  openPdfInNewTab(): void {
+    if (this.rawPdfBlobUrl) {
+      window.open(this.rawPdfBlobUrl, '_blank');
+    }
   }
 
   downloadPdf(inv: Invoice): void {
@@ -355,7 +365,7 @@ export class AppComponent implements OnInit {
   }
 
   removeLogo(): void {
-    this.invoice.logoUrl = undefined;
+    this.invoice.logoUrl = '';
     this.showSuccess('Company logo removed.');
   }
 
@@ -411,7 +421,7 @@ export class AppComponent implements OnInit {
   }
 
   removeSignature(): void {
-    this.invoice.signatureUrl = undefined;
+    this.invoice.signatureUrl = '';
     this.showSuccess('Digital signature removed.');
   }
 

@@ -39,7 +39,12 @@ router.post('/', async (req: Request, res: Response) => {
 // Update invoice
 router.put('/:id', async (req: Request, res: Response) => {
   try {
-    const updated = await Invoice.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const updateData = {
+      ...req.body,
+      logoUrl: req.body.logoUrl !== undefined ? req.body.logoUrl : '',
+      signatureUrl: req.body.signatureUrl !== undefined ? req.body.signatureUrl : ''
+    };
+    const updated = await Invoice.findByIdAndUpdate(req.params.id, updateData, { new: true });
     if (!updated) return res.status(404).json({ error: 'Invoice not found' });
     res.json(updated);
   } catch (err: any) {
